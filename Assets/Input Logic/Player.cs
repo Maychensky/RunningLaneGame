@@ -3,8 +3,11 @@ using UnityEngine.InputSystem;
 
 public class Player: MonoBehaviour
 {
+    private const float DIFFERENCE_FOR_HEINGHT_PLAYER = 0.7f;   
+    private const float DIFFERENCE_FOR_SPEED_MOVE_RUN = 1.5f;   
+    private const float DIFFERENCE_FOR_SPEED_MOVE_SID = 0.5f;   
     [SerializeField] private float mouseSensitivity = 3f;
-    [SerializeField] private float movementSpeed = 5f;
+    [SerializeField] private float movementSpeed = 3f;
     [SerializeField] private float jumpSpeed = 5f;
     [SerializeField] private float mass = 1f;
     [SerializeField] private float acceleration = 20f;
@@ -16,11 +19,23 @@ public class Player: MonoBehaviour
     private InputAction _moveAction;
     private InputAction _lookAction;
     private InputAction _jumpAction;
+    private float _heightPlayerStanding;
+    private float _heightPlayerSitting;
+    private float _defoltSpeedMove;
+    private float _runSpeedMove;
+    private float _sidSpeedMove;
+    private bool _playerRun;
+    private bool _playerSid;
 
     void Awake ()
     {
         _controller = GetComponent<CharacterController>();
         _playerInput = GetComponent<PlayerInput>();
+        _heightPlayerStanding = _controller.height;
+        _heightPlayerSitting = _heightPlayerStanding * DIFFERENCE_FOR_HEINGHT_PLAYER;
+        _defoltSpeedMove = movementSpeed;
+        _runSpeedMove = movementSpeed * DIFFERENCE_FOR_SPEED_MOVE_RUN;
+        _sidSpeedMove = movementSpeed * DIFFERENCE_FOR_SPEED_MOVE_SID;
         _moveAction = _playerInput.actions["move"];
         _lookAction = _playerInput.actions["look"];
         _jumpAction = _playerInput.actions["jump"];
@@ -75,5 +90,43 @@ public class Player: MonoBehaviour
         _look.y = Mathf.Clamp(_look.y, -89f, 89f);
         cameraTransform.localRotation = Quaternion.Euler(-_look.y, 0, 0);
         transform.localRotation = Quaternion.Euler(0, _look.x, 0);
+    }
+
+    void OnSquatStart()
+    {
+        if (_playerRun == false)
+        { 
+            _playerSid = true;
+            _controller.height = _heightPlayerSitting;
+            movementSpeed = _sidSpeedMove;
+        }
+    }
+
+    void OnSquatEnd()
+    {
+        if (_playerRun == false)
+        {
+            _controller.height = _heightPlayerStanding;
+            movementSpeed = _defoltSpeedMove;
+            _playerSid = false;
+        }
+    }
+
+    void OnBoostSpeedRunStart()
+    {
+        if (_playerSid == false)
+        {
+            _playerRun = true;
+            movementSpeed = _runSpeedMove; 
+        }  
+    }
+
+    void OnBoostSpeedRunEnd()
+    {
+        if (_playerSid == false)
+        {
+            movementSpeed = _defoltSpeedMove;
+            _playerRun = false;
+        }   
     }
 }
